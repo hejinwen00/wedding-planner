@@ -50,7 +50,7 @@
         .form-group { display: flex; flex-direction: column; gap: 6px; }
         .form-group.full-width { grid-column: 1 / -1; }
         .form-group label { font-size: 13px; color: #666; font-weight: 500; }
-        .form-group input, .form-group select, .form-group textarea { padding: 10px 14px; border: 1px solid #e8e8e8; border-radius: 8px; font-size: 14px; transition: all 0.2s; outline: none; background: #fafafa; font-family: inherit; }
+        .form-group input, .form-group select, .form-group textarea { padding: 10px 14px; border: 1px solid #e8e8e8; border-radius: 8px; font-size: 16px; transition: all 0.2s; outline: none; background: #fafafa; font-family: inherit; -webkit-appearance: none; }
         .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #c41a1a; background: #fff; box-shadow: 0 0 0 3px rgba(196, 26, 26, 0.08); }
         .form-group textarea { resize: vertical; min-height: 60px; }
         .combo-input { display: flex; gap: 8px; }
@@ -96,16 +96,33 @@
         .link-output .link-note { font-size: 11px; color: #999; margin-top: 8px; }
 
         @media (max-width: 600px) {
-            body { padding: 10px; }
-            .form-grid { grid-template-columns: 1fr; }
-            .ceremony-item { grid-template-columns: 30px 1fr 24px; gap: 8px; padding: 12px; }
-            .music-selects { flex-direction: column; }
-            .cat-select { width: 100%; }
-            .music-input-row { flex-wrap: wrap; }
-            .header h1 { font-size: 20px; }
-            .actions { flex-direction: column; }
-            .btn-primary, .btn-secondary { min-width: unset; }
+            body { padding: 8px; }
+            .container { border-radius: 12px; }
+            .header { padding: 24px 16px; }
+            .header h1 { font-size: 18px; letter-spacing: 1px; }
+            .header p { font-size: 12px; }
+            .form-section { padding: 16px; }
+            .section-title { font-size: 14px; margin-bottom: 14px; }
+            .form-grid { grid-template-columns: 1fr; gap: 12px; margin-bottom: 20px; }
+            .form-group input, .form-group select, .form-group textarea { font-size: 16px; padding: 10px 12px; }
             .combo-input { flex-direction: column; }
+            .ceremony-item { grid-template-columns: 26px 1fr 24px; gap: 6px; padding: 10px; margin-bottom: 8px; }
+            .item-number { width: 24px; height: 24px; font-size: 11px; margin-top: 4px; }
+            .item-number::after { display: none; }
+            .item-content { gap: 6px; }
+            .field-row { flex-wrap: wrap; gap: 6px; }
+            .field-row select { width: 100%; font-size: 14px; padding: 8px 10px; }
+            .field-row input { width: 100%; font-size: 14px; padding: 8px 10px; }
+            .field-row textarea { font-size: 14px; padding: 8px 10px; height: 36px; }
+            .field-label { min-width: 30px; font-size: 11px; }
+            .btn-remove { width: 22px; height: 22px; font-size: 12px; margin-top: 4px; }
+            .btn-add { padding: 12px; font-size: 13px; }
+            .actions { flex-direction: column; padding: 16px; gap: 10px; }
+            .btn-primary, .btn-secondary { min-width: unset; padding: 12px 20px; font-size: 14px; }
+            .link-output { margin: 12px 16px 16px; padding: 12px; }
+            .link-output textarea { height: 70px; font-size: 11px; }
+            .view-banner { padding: 10px 16px; font-size: 12px; }
+            .view-banner button { margin-left: 8px; padding: 5px 10px; font-size: 11px; }
         }
     </style>
 </head>
@@ -370,8 +387,7 @@
         if (!data.weddingDate) { alert('请填写婚礼日期'); return; }
         const jsonStr = JSON.stringify(data);
         const encoded = btoa(encodeURIComponent(jsonStr));
-        const basePath = location.pathname.endsWith('/') ? location.pathname : location.pathname.replace(/[^/]*$/, '');
-        const link = location.origin + basePath + 'admin.html#data=' + encoded;
+        const link = location.origin + location.pathname + '#data=' + encoded;
         document.getElementById('linkText').value = link;
         document.getElementById('linkOutput').classList.add('show');
         document.getElementById('linkOutput').scrollIntoView({ behavior: 'smooth' });
