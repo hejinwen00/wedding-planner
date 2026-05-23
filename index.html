@@ -1,0 +1,424 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>婚礼仪式 & 音乐确认单</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #fff5f5 0%, #fff0f0 50%, #ffe8e8 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 860px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(200, 50, 50, 0.08);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #c41a1a 0%, #e63946 50%, #d4380d 100%);
+            padding: 36px 24px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '囍';
+            position: absolute;
+            font-size: 140px;
+            opacity: 0.06;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+        }
+        .header h1 { color: #fff; font-size: 26px; font-weight: 700; letter-spacing: 3px; position: relative; z-index: 1; }
+        .header p { color: rgba(255,255,255,0.85); font-size: 14px; margin-top: 8px; position: relative; z-index: 1; }
+        .view-banner { display: none; padding: 14px 24px; background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; text-align: center; font-size: 14px; gap: 12px; align-items: center; justify-content: center; }
+        .view-banner.show { display: flex; flex-wrap: wrap; }
+        .view-banner button { margin-left: 12px; padding: 6px 14px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color: #fff; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .view-banner button:hover { background: rgba(255,255,255,0.3); }
+        .form-section { padding: 24px; }
+        .section-title { font-size: 16px; font-weight: 600; color: #c41a1a; padding-bottom: 12px; margin-bottom: 20px; border-bottom: 2px solid #ffe0e0; display: flex; align-items: center; gap: 8px; }
+        .section-title::before { content: ''; width: 4px; height: 18px; background: #c41a1a; border-radius: 2px; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group.full-width { grid-column: 1 / -1; }
+        .form-group label { font-size: 13px; color: #666; font-weight: 500; }
+        .form-group input, .form-group select, .form-group textarea { padding: 10px 14px; border: 1px solid #e8e8e8; border-radius: 8px; font-size: 14px; transition: all 0.2s; outline: none; background: #fafafa; font-family: inherit; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #c41a1a; background: #fff; box-shadow: 0 0 0 3px rgba(196, 26, 26, 0.08); }
+        .form-group textarea { resize: vertical; min-height: 60px; }
+        .combo-input { display: flex; gap: 8px; }
+        .combo-input select { flex: 1; }
+        .combo-input input { flex: 1; }
+        .ceremony-list { margin-top: 16px; }
+        .ceremony-item { display: grid; grid-template-columns: 36px 1fr 28px; gap: 10px; align-items: start; padding: 14px; margin-bottom: 10px; background: #fafafa; border-radius: 12px; border: 1px solid #f0f0f0; transition: all 0.25s cubic-bezier(0.2,0,0,1); cursor: grab; position: relative; }
+        .ceremony-item:active { cursor: grabbing; }
+        .ceremony-item:hover { border-color: #ffe0e0; background: #fff8f8; }
+        .ceremony-item.dragging { opacity: 0.4; border: 2px dashed #c41a1a; background: #fff0f0; transform: scale(0.96) rotate(-1deg); box-shadow: 0 8px 24px rgba(196, 26, 26, 0.15); z-index: 10; }
+        .ceremony-item.drag-over { border-color: #c41a1a; background: #fff0f0; transform: translateY(4px); }
+        .ceremony-item.drag-over::before { content: ''; position: absolute; top: -6px; left: 10%; right: 10%; height: 3px; background: linear-gradient(90deg, transparent, #c41a1a, transparent); border-radius: 2px; animation: pulse-line 1s infinite; }
+        @keyframes pulse-line { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
+        .item-number { width: 28px; height: 28px; background: linear-gradient(135deg, #c41a1a, #e63946); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; margin-top: 6px; cursor: grab; position: relative; }
+        .item-number::after { content: '⋮⋮'; position: absolute; bottom: -14px; left: 50%; transform: translateX(-50%); font-size: 10px; color: #ccc; letter-spacing: -2px; }
+        .item-content { display: flex; flex-direction: column; gap: 6px; }
+        .field-label { font-size: 12px; color: #999; min-width: 36px; flex-shrink: 0; }
+        .field-row { display: flex; align-items: center; gap: 8px; }
+        .field-row select { padding: 7px 10px; border: 1px solid #e8e8e8; border-radius: 6px; font-size: 12px; outline: none; background: #fff; flex-shrink: 0; }
+        .field-row select:focus { border-color: #c41a1a; }
+        .field-row input { padding: 7px 10px; border: 1px solid #e8e8e8; border-radius: 6px; font-size: 12px; outline: none; background: #fff; flex: 1; min-width: 0; }
+        .field-row input:focus { border-color: #c41a1a; box-shadow: 0 0 0 2px rgba(196, 26, 26, 0.06); }
+        .field-row .time-input { display: none; }
+        .field-row textarea { padding: 7px 10px; border: 1px solid #e8e8e8; border-radius: 6px; font-size: 12px; outline: none; background: #fff; flex: 1; min-width: 0; resize: none; height: 32px; font-family: inherit; }
+        .field-row textarea:focus { border-color: #c41a1a; box-shadow: 0 0 0 2px rgba(196, 26, 26, 0.06); }
+
+        .btn-remove { width: 24px; height: 24px; border: none; background: #fff0f0; color: #c41a1a; border-radius: 6px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; margin-top: 6px; }
+        .btn-remove:hover { background: #c41a1a; color: #fff; }
+        .btn-add { width: 100%; padding: 14px; border: 2px dashed #e0e0e0; background: transparent; border-radius: 10px; color: #999; font-size: 14px; cursor: pointer; transition: all 0.2s; margin-top: 12px; }
+        .btn-add:hover { border-color: #c41a1a; color: #c41a1a; background: #fff8f8; }
+        .actions { padding: 24px; border-top: 1px solid #f0f0f0; display: flex; gap: 12px; flex-wrap: wrap; }
+        .btn-primary { flex: 1; min-width: 180px; padding: 14px 24px; background: linear-gradient(135deg, #c41a1a 0%, #e63946 100%); color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; letter-spacing: 1px; }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(196, 26, 26, 0.3); }
+        .btn-primary:active { transform: translateY(0); }
+        .btn-secondary { padding: 14px 24px; background: #f5f5f5; color: #666; border: none; border-radius: 10px; font-size: 15px; cursor: pointer; transition: all 0.2s; }
+        .btn-secondary:hover { background: #e8e8e8; }
+        .link-output { display: none; margin: 16px 24px 24px; padding: 16px; background: #f8fff8; border: 1px solid #d4edda; border-radius: 10px; }
+        .link-output.show { display: block; }
+        .link-output p { font-size: 13px; color: #28a745; margin-bottom: 8px; font-weight: 500; }
+        .link-output textarea { width: 100%; padding: 10px; border: 1px solid #d4edda; border-radius: 6px; font-size: 12px; resize: none; height: 80px; color: #333; background: #fff; }
+        .link-output .btn-copy { margin-top: 8px; padding: 8px 16px; background: #28a745; color: #fff; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; }
+        .link-output .btn-copy:hover { background: #218838; }
+        .link-output .link-note { font-size: 11px; color: #999; margin-top: 8px; }
+
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .ceremony-item { grid-template-columns: 30px 1fr 24px; gap: 8px; padding: 12px; }
+            .music-selects { flex-direction: column; }
+            .cat-select { width: 100%; }
+            .music-input-row { flex-wrap: wrap; }
+            .header h1 { font-size: 20px; }
+            .actions { flex-direction: column; }
+            .btn-primary, .btn-secondary { min-width: unset; }
+            .combo-input { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="view-banner" id="viewBanner">
+            📋 数据查看模式 — 来自新人填写的确认单
+            <button onclick="saveToLocal()">💾 保存到本地</button>
+            <button onclick="exportJSON()">📥 导出JSON</button>
+        </div>
+        <div class="header">
+            <h1>婚礼仪式 & 音乐确认单</h1>
+            <p>新人专属 · 请仔细填写您的婚礼信息</p>
+            <a href="admin.html" style="position:absolute;right:16px;top:16px;color:rgba(255,255,255,0.7);font-size:12px;text-decoration:none;background:rgba(255,255,255,0.15);padding:5px 12px;border-radius:6px;z-index:2;">📋 管理端</a>
+        </div>
+        <div class="form-section">
+            <div class="section-title">新人婚礼基础信息</div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>新郎姓名 *</label>
+                    <input type="text" id="groomName" placeholder="请输入新郎姓名">
+                </div>
+                <div class="form-group">
+                    <label>新娘姓名 *</label>
+                    <input type="text" id="brideName" placeholder="请输入新娘姓名">
+                </div>
+                <div class="form-group">
+                    <label>婚礼日期 *</label>
+                    <input type="date" id="weddingDate">
+                </div>
+                <div class="form-group">
+                    <label>酒店/场地</label>
+                    <input type="text" id="venue" placeholder="请输入酒店或场地名称">
+                </div>
+                <div class="form-group">
+                    <label>主持风格</label>
+                    <div class="combo-input">
+                        <select id="hostStyleSelect" onchange="onStyleSelectChange()">
+                            <option value="">选择风格...</option>
+                            <option value="浪漫温馨">浪漫温馨</option>
+                            <option value="大气庄重">大气庄重</option>
+                            <option value="轻松幽默">轻松幽默</option>
+                            <option value="中式传统">中式传统</option>
+                            <option value="西式简约">西式简约</option>
+                            <option value="户外清新">户外清新</option>
+                            <option value="custom">自定义...</option>
+                        </select>
+                        <input type="text" id="hostStyleCustom" placeholder="输入自定义风格" style="display:none;">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>联系电话</label>
+                    <input type="tel" id="phone" placeholder="方便策划师联系">
+                </div>
+                <div class="form-group full-width">
+                    <label>备注/特殊要求</label>
+                    <textarea id="remarks" placeholder="如有特殊要求请在此填写"></textarea>
+                </div>
+            </div>
+            <div class="section-title">仪式流程 & 背景音乐明细（可拖拽排序）</div>
+            <div class="ceremony-list" id="ceremonyList"></div>
+            <button class="btn-add" onclick="addCeremonyItem()">+ 添加流程环节</button>
+        </div>
+        <div class="actions">
+            <button class="btn-primary" onclick="generateLink()">✨ 生成分享链接</button>
+            <button class="btn-secondary" onclick="resetForm()">🔄 重置</button>
+        </div>
+        <div class="link-output" id="linkOutput">
+            <p>✅ 链接已生成，复制发送给策划师即可：</p>
+            <textarea id="linkText" readonly></textarea>
+            <button class="btn-copy" onclick="copyLink()">📋 复制链接</button>
+            <div class="link-note">💡 提示：链接中包含所有填写的数据，策划师打开即可查看。</div>
+        </div>
+    </div>
+
+    <script>
+    // 流程名称快捷选项
+    const processPresets = [
+        '主持人暖场','主持人开场白','新郎入场','新娘入场','父亲回赠新娘',
+        '交接仪式','誓言环节','交换戒指','倒香槟','切蛋糕',
+        '抛花束','敬酒环节','感恩父母','拥抱环节','合影留念',
+        '退场','签到迎宾','播放VCR/视频','游戏互动','证婚人致辞'
+    ];
+
+    const musicLibrary = {
+        '暖场': ['Love Story - Taylor Swift','Marry You - Bruno Mars','Perfect - Ed Sheeran','All of Me - John Legend','小幸运 - 田馥甄','告白气球 - 周杰伦','甜蜜蜜 - 邓丽君'],
+        '入场': ['Canon in D - Pachelbel（卡农）','Wedding March - Wagner（婚礼进行曲）','A Thousand Years - Christina Perri','Here Comes The Bride','今天你要嫁给我 - 陶喆&蔡依林','Beautiful in White - Westlife','Dream Wedding（梦中的婚礼）','River Flows in You - Yiruma','At Last - Etta James'],
+        '交接/誓言': ['You Raise Me Up - Westlife','最浪漫的事 - 赵咏华','I Swear - All-4-One','Because You Loved Me - Celine Dion','爱很简单 - 陶喆','给你们 - 张宇','The Prayer - Andrea Bocelli'],
+        '交换戒指': ['From This Moment On - Shania Twain','Endless Love - Lionel Richie','明天你好 - 牛奶咖啡','Marry Me - Train','Better Together - Jack Johnson','Everything - Michael Buble'],
+        '敬酒/欢乐': ['好日子 - 宋祖英','Sugar - Maroon 5','Happy - Pharrell Williams','稳稳的幸福 - 陈奕迅','我们结婚吧 - 齐晨','Celebration - Kool & The Gang','最好的未来 - 刘若英'],
+        '感恩/煽情': ['父亲 - 筷子兄弟','时间都去哪儿了 - 王铮亮','听妈妈的话 - 周杰伦','My Heart Will Go On - Celine Dion','感恩的心','天下父母心','烛光里的妈妈']
+    };
+
+    const defaultCeremony = [
+        { name: '主持人暖场', content: '', duration: '5min', music: '', musicCategory: '暖场' },
+        { name: '主持人开场白', content: '', duration: '3min', music: '', musicCategory: '暖场' },
+        { name: '新郎入场', content: '', duration: '2min', music: '', musicCategory: '入场' },
+        { name: '新娘入场', content: '', duration: '3min', music: '', musicCategory: '入场' },
+        { name: '父亲回赠新娘', content: '', duration: '2min', music: '', musicCategory: '感恩/煽情' },
+        { name: '交接仪式', content: '', duration: '2min', music: '', musicCategory: '交接/誓言' },
+        { name: '誓言环节', content: '', duration: '3min', music: '', musicCategory: '交接/誓言' },
+        { name: '交换戒指', content: '', duration: '2min', music: '', musicCategory: '交换戒指' },
+        { name: '倒香槟', content: '', duration: '2min', music: '', musicCategory: '敬酒/欢乐' },
+        { name: '抛花束', content: '', duration: '2min', music: '', musicCategory: '敬酒/欢乐' },
+        { name: '敬酒环节', content: '', duration: '10min', music: '', musicCategory: '敬酒/欢乐' }
+    ];
+
+    let ceremonyItems = JSON.parse(JSON.stringify(defaultCeremony));
+    let draggedIndex = null;
+
+    function init() {
+        const hash = location.hash;
+        if (hash && hash.startsWith('#data=')) {
+            try {
+                const encoded = hash.substring(6);
+                const jsonStr = decodeURIComponent(atob(encoded));
+                const data = JSON.parse(jsonStr);
+                loadData(data);
+                showViewMode();
+            } catch (e) {
+                console.error('数据解析失败:', e);
+                renderList();
+            }
+        } else {
+            renderList();
+        }
+    }
+
+    function loadData(data) {
+        if (data.groomName) document.getElementById('groomName').value = data.groomName;
+        if (data.brideName) document.getElementById('brideName').value = data.brideName;
+        if (data.weddingDate) document.getElementById('weddingDate').value = data.weddingDate;
+        if (data.venue) document.getElementById('venue').value = data.venue;
+        if (data.hostStyle) {
+            const sel = document.getElementById('hostStyleSelect');
+            const opts = Array.from(sel.options).map(o => o.value);
+            if (opts.includes(data.hostStyle)) { sel.value = data.hostStyle; }
+            else { sel.value = 'custom'; document.getElementById('hostStyleCustom').style.display = 'block'; document.getElementById('hostStyleCustom').value = data.hostStyle; }
+        }
+        if (data.phone) document.getElementById('phone').value = data.phone;
+        if (data.remarks) document.getElementById('remarks').value = data.remarks;
+        if (data.ceremony && data.ceremony.length > 0) {
+            ceremonyItems = data.ceremony.map(item => ({ name: item.name || '', content: item.content || '', duration: item.duration || '', music: item.music || '', musicCategory: item.musicCategory || '暖场' }));
+        }
+        renderList();
+    }
+
+    function showViewMode() { document.getElementById('viewBanner').classList.add('show'); }
+
+    function onStyleSelectChange() {
+        const sel = document.getElementById('hostStyleSelect');
+        const ci = document.getElementById('hostStyleCustom');
+        if (sel.value === 'custom') { ci.style.display = 'block'; ci.focus(); }
+        else { ci.style.display = 'none'; ci.value = ''; }
+    }
+
+    function getHostStyle() {
+        const sel = document.getElementById('hostStyleSelect');
+        return sel.value === 'custom' ? document.getElementById('hostStyleCustom').value.trim() : sel.value;
+    }
+
+    function esc(str) {
+        if (!str) return '';
+        return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+    }
+
+    function getProcessOpts(current) {
+        let html = '<option value="">快捷选择...</option>';
+        processPresets.forEach(p => { html += '<option value="'+esc(p)+'" '+(p===current?'selected':'')+'>'+esc(p)+'</option>'; });
+        html += '<option value="__custom__">✏️ 自定义</option>';
+        return html;
+    }
+
+    function getMusicOpts(category, current) {
+        const songs = musicLibrary[category] || [];
+        let html = '<option value="">选择音乐...</option>';
+        songs.forEach(s => { html += '<option value="'+esc(s)+'" '+(s===current?'selected':'')+'>'+esc(s)+'</option>'; });
+        html += '<option value="__custom__">✏️ 手动输入</option>';
+        return html;
+    }
+
+    function renderList() {
+        const list = document.getElementById('ceremonyList');
+        list.innerHTML = ceremonyItems.map((item, i) => {
+            const processOpts = getProcessOpts(item.name);
+            const catOpts = Object.keys(musicLibrary).map(c => '<option value="'+c+'" '+(item.musicCategory===c?'selected':'')+'>'+c+'</option>').join('');
+            const songOpts = getMusicOpts(item.musicCategory, item.music);
+            return '<div class="ceremony-item" draggable="true" data-index="'+i+'" ondragstart="onDragStart(event,'+i+')" ondragover="onDragOver(event)" ondrop="onDrop(event,'+i+')" ondragend="onDragEnd(event)" ondragleave="onDragLeave(event)">'
+                + '<div class="item-number">'+(i+1)+'</div>'
+                + '<div class="item-content">'
+                + '<div class="field-row"><span class="field-label">流程</span><select onchange="onProcessSelect('+i+',this.value)">'+processOpts+'</select><input type="text" value="'+esc(item.name)+'" placeholder="流程名称" onchange="updateItem('+i+',\'name\',this.value)" id="pn_'+i+'"></div>'
+                + '<div class="field-row"><span class="field-label">内容</span><textarea placeholder="流程具体内容/备注（选填）" onchange="updateItem('+i+',\'content\',this.value)">'+esc(item.content)+'</textarea></div>'
+                + '<div class="field-row"><span class="field-label">音乐</span><select style="width:90px" onchange="onCatChange('+i+',this.value)">'+catOpts+'</select><select style="flex:1;min-width:0" onchange="onSongSelect('+i+',this.value)">'+songOpts+'</select></div>'
+                + '<div class="field-row"><span class="field-label"></span><input type="text" value="'+esc(item.music)+'" placeholder="或手动输入音乐名" onchange="updateItem('+i+',\'music\',this.value)" id="mi_'+i+'"></div>'
+                + '</div>'
+                + '<button class="btn-remove" onclick="removeItem('+i+')">×</button>'
+                + '</div>';
+        }).join('');
+    }
+
+    function updateItem(i, field, val) { ceremonyItems[i][field] = val; }
+
+    function onProcessSelect(i, val) {
+        if (val === '__custom__') { document.getElementById('pn_'+i).focus(); return; }
+        ceremonyItems[i].name = val;
+        document.getElementById('pn_'+i).value = val;
+    }
+
+    function onCatChange(i, cat) { ceremonyItems[i].musicCategory = cat; ceremonyItems[i].music = ''; renderList(); }
+
+    function onSongSelect(i, val) {
+        if (val === '__custom__') { document.getElementById('mi_'+i).focus(); return; }
+        ceremonyItems[i].music = val;
+        document.getElementById('mi_'+i).value = val;
+    }
+
+
+
+    function addCeremonyItem() {
+        ceremonyItems.push({ name: '', content: '', duration: '', music: '', musicCategory: '暖场' });
+        renderList();
+        const list = document.getElementById('ceremonyList');
+        list.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function removeItem(i) {
+        if (ceremonyItems.length <= 1) { alert('至少保留一个流程环节'); return; }
+        ceremonyItems.splice(i, 1);
+        renderList();
+    }
+
+    function onDragStart(e, i) { draggedIndex = i; e.currentTarget.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
+    function onDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; const item = e.currentTarget.closest('.ceremony-item'); if (item && !item.classList.contains('dragging')) { document.querySelectorAll('.ceremony-item.drag-over').forEach(el => el.classList.remove('drag-over')); item.classList.add('drag-over'); } }
+    function onDrop(e, ti) {
+        e.preventDefault();
+        document.querySelectorAll('.ceremony-item.drag-over').forEach(el => el.classList.remove('drag-over'));
+        if (draggedIndex === null || draggedIndex === ti) return;
+        const item = ceremonyItems.splice(draggedIndex, 1)[0];
+        ceremonyItems.splice(ti, 0, item);
+        renderList(); draggedIndex = null;
+    }
+    function onDragEnd(e) { e.currentTarget.classList.remove('dragging'); document.querySelectorAll('.ceremony-item.drag-over').forEach(el => el.classList.remove('drag-over')); draggedIndex = null; }
+    function onDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+
+    function collectData() {
+        return {
+            groomName: document.getElementById('groomName').value.trim(),
+            brideName: document.getElementById('brideName').value.trim(),
+            weddingDate: document.getElementById('weddingDate').value,
+            venue: document.getElementById('venue').value.trim(),
+            hostStyle: getHostStyle(),
+            phone: document.getElementById('phone').value.trim(),
+            remarks: document.getElementById('remarks').value.trim(),
+            ceremony: ceremonyItems.map(item => ({ name: item.name, content: item.content, duration: item.duration, music: item.music, musicCategory: item.musicCategory })),
+            createdAt: new Date().toISOString()
+        };
+    }
+
+    function generateLink() {
+        const data = collectData();
+        if (!data.groomName || !data.brideName) { alert('请至少填写新郎和新娘姓名'); return; }
+        if (!data.weddingDate) { alert('请填写婚礼日期'); return; }
+        const jsonStr = JSON.stringify(data);
+        const encoded = btoa(encodeURIComponent(jsonStr));
+        const basePath = location.pathname.endsWith('/') ? location.pathname : location.pathname.replace(/[^/]*$/, '');
+        const link = location.origin + basePath + 'admin.html#data=' + encoded;
+        document.getElementById('linkText').value = link;
+        document.getElementById('linkOutput').classList.add('show');
+        document.getElementById('linkOutput').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function copyLink() {
+        const ta = document.getElementById('linkText');
+        ta.select();
+        navigator.clipboard.writeText(ta.value).then(() => {
+            const btn = document.querySelector('.btn-copy');
+            btn.textContent = '✅ 已复制'; setTimeout(() => { btn.textContent = '📋 复制链接'; }, 2000);
+        }).catch(() => { document.execCommand('copy'); });
+    }
+
+    function saveToLocal() {
+        const data = collectData();
+        let list = JSON.parse(localStorage.getItem('wedding_orders') || '[]');
+        list.push({ key: 'wedding_'+data.groomName+'_'+data.brideName+'_'+Date.now(), data: data, savedAt: new Date().toISOString() });
+        localStorage.setItem('wedding_orders', JSON.stringify(list));
+        alert('✅ 已保存到本地！\n' + data.groomName + ' & ' + data.brideName + ' 的确认单');
+    }
+
+    function exportJSON() {
+        const data = collectData();
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = '婚礼确认单_'+data.groomName+'_'+data.brideName+'.json'; a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function resetForm() {
+        if (!confirm('确定要重置所有内容吗？')) return;
+        document.getElementById('groomName').value = '';
+        document.getElementById('brideName').value = '';
+        document.getElementById('weddingDate').value = '';
+        document.getElementById('venue').value = '';
+        document.getElementById('hostStyleSelect').value = '';
+        document.getElementById('hostStyleCustom').style.display = 'none';
+        document.getElementById('hostStyleCustom').value = '';
+        document.getElementById('phone').value = '';
+        document.getElementById('remarks').value = '';
+        ceremonyItems = JSON.parse(JSON.stringify(defaultCeremony));
+        renderList();
+        document.getElementById('linkOutput').classList.remove('show');
+    }
+
+    init();
+    </script>
+</body>
+</html>

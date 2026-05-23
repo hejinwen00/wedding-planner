@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>婚礼确认单 - 管理端</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+            color: #333;
+        }
+        /* 顶部导航 */
+        .topbar {
+            background: #fff;
+            border-bottom: 1px solid #e8e8e8;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .topbar h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .topbar h1 span { color: #c41a1a; }
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .view-toggle {
+            display: flex;
+            background: #f0f0f0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .view-toggle button {
+            padding: 8px 16px;
+            border: none;
+            background: transparent;
+            font-size: 13px;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.2s;
+        }
+        .view-toggle button.active {
+            background: #c41a1a;
+            color: #fff;
+        }
+        .btn-settings {
+            padding: 8px 14px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.2s;
+        }
+        .btn-settings:hover { background: #e0e0e0; }
+        .btn-danger {
+            padding: 8px 14px;
+            background: #fff0f0;
+            border: 1px solid #ffccc7;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            color: #c41a1a;
+            transition: all 0.2s;
+        }
+        .btn-danger:hover { background: #c41a1a; color: #fff; }
+
+        /* 统计栏 */
+        .stats-bar {
+            padding: 16px 24px;
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .stat-card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 14px 20px;
+            flex: 1;
+            min-width: 140px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .stat-card .stat-num { font-size: 24px; font-weight: 700; color: #c41a1a; }
+        .stat-card .stat-label { font-size: 12px; color: #999; margin-top: 4px; }
+        .stat-card.upcoming .stat-num { color: #28a745; }
+        .stat-card.expired .stat-num { color: #999; }
+
+        /* 主内容区 */
+        .main-content { padding: 0 24px 24px; }
+
+        /* 解析输入区 */
+        .parse-section {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .parse-section h3 { font-size: 14px; color: #666; margin-bottom: 12px; }
+        .parse-row {
+            display: flex;
+            gap: 10px;
+            align-items: stretch;
+        }
+        .parse-row textarea {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid #e8e8e8;
+            border-radius: 8px;
+            font-size: 13px;
+            resize: none;
+            height: 44px;
+            outline: none;
+            font-family: inherit;
+        }
+        .parse-row textarea:focus { border-color: #c41a1a; }
+        .parse-row button {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #c41a1a, #e63946);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .parse-row button:hover { opacity: 0.9; }
+
+        /* 设置面板 */
+        .settings-panel {
+            display: none;
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            border: 1px solid #e8e8e8;
+        }
+        .settings-panel.show { display: block; }
+        .settings-panel h3 { font-size: 14px; color: #333; margin-bottom: 16px; }
+        .setting-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        .setting-item:last-child { border-bottom: none; }
+        .setting-item .setting-info { flex: 1; }
+        .setting-item .setting-info .title { font-size: 14px; color: #333; }
+        .setting-item .setting-info .desc { font-size: 12px; color: #999; margin-top: 2px; }
+        /* Toggle switch */
+        .toggle {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .toggle .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #ccc;
+            border-radius: 24px;
+            transition: 0.3s;
+        }
+        .toggle .slider::before {
+            content: '';
+            position: absolute;
+            height: 18px; width: 18px;
+            left: 3px; bottom: 3px;
+            background: #fff;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+        .toggle input:checked + .slider { background: #c41a1a; }
+        .toggle input:checked + .slider::before { transform: translateX(20px); }
+
+        /* 列表视图 */
+        .list-view { display: none; }
+        .list-view.active { display: block; }
+        .order-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 18px 20px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            border-left: 4px solid #28a745;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .order-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+        .order-card.expired { border-left-color: #ccc; }
+        .order-card.today-event { border-left-color: #c41a1a; background: #fffaf8; }
+        .order-card.this-week { border-left-color: #e6a700; }
+        .order-card .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .order-card .card-title { font-size: 15px; font-weight: 600; }
+        .order-card .card-badge {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .order-card .card-badge.badge-upcoming { background: #e6f7ee; color: #28a745; }
+        .order-card .card-badge.badge-today { background: #fff0f0; color: #c41a1a; animation: pulse-badge 2s infinite; }
+        .order-card .card-badge.badge-week { background: #fff8e6; color: #e6a700; }
+        .order-card .card-badge.badge-expired { background: #f5f5f5; color: #999; }
+        .order-card .card-badge.badge-nodate { background: #f0f0f0; color: #999; }
+        @keyframes pulse-badge { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+        .order-card .card-date {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .order-card .card-date .days-left {
+            font-size: 11px;
+            color: #c41a1a;
+            font-weight: 500;
+        }
+        .order-card .card-info {
+            font-size: 12px;
+            color: #999;
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .order-card .card-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .order-card .card-actions button {
+            padding: 5px 10px;
+            border: 1px solid #e8e8e8;
+            background: #fff;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.2s;
+        }
+        .order-card .card-actions button:hover { border-color: #c41a1a; color: #c41a1a; }
+        .order-card .card-actions button.del:hover { background: #c41a1a; color: #fff; border-color: #c41a1a; }
+        .list-section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            padding: 12px 0 8px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .list-section-title .count { color: #999; font-weight: 400; }
+
+        /* 日历视图 */
+        .calendar-view { display: none; }
+        .calendar-view.active { display: block; }
+        .calendar-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .calendar-nav button {
+            width: 32px; height: 32px;
+            border: 1px solid #e8e8e8;
+            background: #fff;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .calendar-nav button:hover { border-color: #c41a1a; color: #c41a1a; }
+        .calendar-nav .month-label { font-size: 16px; font-weight: 600; min-width: 120px; text-align: center; }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .calendar-grid .day-header {
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+            padding: 8px 0;
+            font-weight: 500;
+        }
+        .calendar-grid .day-cell {
+            min-height: 48px;
+            padding: 4px;
+            border-radius: 6px;
+            border: 1px solid #f5f5f5;
+            font-size: 12px;
+            position: relative;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .calendar-grid .day-cell:hover { background: #fff8f8; border-color: #ffe0e0; }
+        .calendar-grid .day-cell.today { border-color: #c41a1a; background: #fff8f8; }
+        .calendar-grid .day-cell.other-month { opacity: 0.3; cursor: default; }
+        .calendar-grid .day-cell .day-num { font-weight: 600; color: #333; font-size: 12px; }
+        .calendar-grid .day-cell .day-count {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 18px;
+            height: 18px;
+            background: linear-gradient(135deg, #c41a1a, #e63946);
+            color: #fff;
+            border-radius: 50%;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+        .calendar-grid .day-cell .day-count.expired-count {
+            background: #ccc;
+        }
+        .calendar-grid .day-cell .day-count.mixed-count {
+            background: linear-gradient(135deg, #e6a700, #f0c040);
+        }
+        .calendar-grid .day-cell .day-event {
+            display: none;
+        }
+        .calendar-grid .day-cell .day-event.expired-event { display: none; }
+        .calendar-grid .day-cell .day-event.today-event { display: none; }
+        /* 日期下方列表弹出 */
+        .day-popover {
+            display: none;
+            position: fixed;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            padding: 12px;
+            z-index: 500;
+            min-width: 200px;
+            max-width: 280px;
+        }
+        .day-popover.show { display: block; }
+        .day-popover .pop-title { font-size: 13px; font-weight: 600; color: #333; margin-bottom: 8px; border-bottom: 1px solid #f0f0f0; padding-bottom: 6px; }
+        .day-popover .pop-item {
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+        .day-popover .pop-item:hover { background: #fff0f0; }
+        .day-popover .pop-item .pop-dot { width: 6px; height: 6px; border-radius: 50%; background: #28a745; flex-shrink: 0; }
+        .day-popover .pop-item .pop-dot.expired { background: #ccc; }
+        .day-popover .pop-item .pop-dot.is-today { background: #c41a1a; }
+        .calendar-month-stat {
+            margin-top: 12px;
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            font-size: 13px;
+            color: #666;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .calendar-month-stat strong { color: #c41a1a; }
+
+        /* 详情弹窗 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal {
+            background: #fff;
+            border-radius: 16px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 24px;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.15);
+        }
+        .modal h2 { font-size: 18px; margin-bottom: 16px; color: #c41a1a; }
+        .modal .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .modal .detail-item { font-size: 13px; }
+        .modal .detail-item .label { color: #999; font-size: 12px; }
+        .modal .detail-item .value { color: #333; margin-top: 2px; font-weight: 500; }
+        .modal .ceremony-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 12px; }
+        .modal .ceremony-table th { background: #f5f5f5; padding: 8px; text-align: left; color: #666; }
+        .modal .ceremony-table td { padding: 8px; border-bottom: 1px solid #f5f5f5; }
+        .modal .modal-close {
+            margin-top: 16px;
+            padding: 10px 20px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            width: 100%;
+        }
+        .modal .modal-close:hover { background: #e0e0e0; }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+        .empty-state p { font-size: 14px; }
+
+        /* 提示 toast */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: #333;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 13px;
+            z-index: 2000;
+            transition: transform 0.3s;
+            white-space: nowrap;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast.warn { background: #e6a700; }
+        .toast.success { background: #28a745; }
+        .toast.error { background: #c41a1a; }
+
+        @media (max-width: 600px) {
+            .topbar { padding: 12px 16px; }
+            .topbar h1 { font-size: 15px; }
+            .stats-bar { padding: 12px 16px; }
+            .main-content { padding: 0 16px 16px; }
+            .parse-row { flex-direction: column; }
+            .calendar-grid .day-cell { min-height: 40px; padding: 3px; }
+            .modal .detail-grid { grid-template-columns: 1fr; }
+            .order-card .card-info { flex-direction: column; gap: 4px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <h1>📋 <span>婚礼确认单</span> 管理端</h1>
+        <div class="topbar-actions">
+            <a href="index.html" style="padding:8px 14px;background:#fff0f0;border-radius:8px;font-size:13px;color:#c41a1a;text-decoration:none;">✏️ 用户端</a>
+            <div class="view-toggle">
+                <button class="active" onclick="switchView('list')">📃 列表</button>
+                <button onclick="switchView('calendar')">📅 日历</button>
+            </div>
+            <button class="btn-settings" onclick="toggleSettings()">⚙️ 设置</button>
+            <button class="btn-danger" onclick="clearAll()">🗑️ 清除全部</button>
+        </div>
+    </div>
+
+    <div class="stats-bar">
+        <div class="stat-card"><div class="stat-num" id="statTotal">0</div><div class="stat-label">总确认单</div></div>
+        <div class="stat-card upcoming"><div class="stat-num" id="statUpcoming">0</div><div class="stat-label">未到期</div></div>
+        <div class="stat-card expired"><div class="stat-num" id="statExpired">0</div><div class="stat-label">已过期</div></div>
+    </div>
+
+    <div class="main-content">
+        <!-- 设置面板 -->
+        <div class="settings-panel" id="settingsPanel">
+            <h3>⚙️ 设置</h3>
+            <div class="setting-item">
+                <div class="setting-info">
+                    <div class="title">解析链接时自动保存</div>
+                    <div class="desc">开启后，粘贴链接解析时自动保存到本地，无需手动点击保存</div>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" id="autoSaveToggle" onchange="onAutoSaveChange()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <!-- 解析输入 -->
+        <div class="parse-section">
+            <h3>📎 粘贴新人分享的链接，解析确认单数据</h3>
+            <div class="parse-row">
+                <textarea id="parseInput" placeholder="粘贴链接到这里..."></textarea>
+                <button onclick="parseLink()">解析</button>
+            </div>
+        </div>
+
+        <!-- 列表视图 -->
+        <div class="list-view active" id="listView"></div>
+
+        <!-- 日历视图 -->
+        <div class="calendar-view" id="calendarView">
+            <div class="calendar-nav">
+                <button onclick="prevMonth()">◀</button>
+                <div class="month-label" id="monthLabel"></div>
+                <button onclick="nextMonth()">▶</button>
+            </div>
+            <div class="calendar-grid" id="calendarGrid"></div>
+            <div class="calendar-month-stat" id="monthStat"></div>
+        </div>
+    </div>
+
+    <!-- 详情弹窗 -->
+    <div class="day-popover" id="dayPopover"></div>
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+        <div class="modal" id="modalContent"></div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+    // ========== 数据管理 ==========
+    const STORAGE_KEY = 'wedding_orders';
+    const SETTINGS_KEY = 'wedding_admin_settings';
+
+    let orders = [];
+    let currentView = 'list';
+    let calendarYear, calendarMonth;
+
+    function loadOrders() {
+        orders = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    }
+
+    function saveOrders() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
+    }
+
+    function loadSettings() {
+        const s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+        document.getElementById('autoSaveToggle').checked = !!s.autoSave;
+    }
+
+    function getSettings() {
+        return JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+    }
+
+    function onAutoSaveChange() {
+        const s = getSettings();
+        s.autoSave = document.getElementById('autoSaveToggle').checked;
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+        showToast(s.autoSave ? '已开启自动保存' : '已关闭自动保存', 'success');
+    }
+
+    // ========== 解析链接 ==========
+    function parseLink() {
+        const input = document.getElementById('parseInput').value.trim();
+        if (!input) { showToast('请粘贴链接', 'warn'); return; }
+
+        let data = null;
+        try {
+            // 从链接中提取 #data= 部分
+            const match = input.match(/#data=(.+)$/);
+            if (!match) throw new Error('无效链接');
+            const encoded = match[1];
+            const jsonStr = decodeURIComponent(atob(encoded));
+            data = JSON.parse(jsonStr);
+        } catch (e) {
+            showToast('链接解析失败，请检查链接是否完整', 'error');
+            return;
+        }
+
+        if (!data.groomName || !data.brideName) {
+            showToast('数据不完整，缺少新人姓名', 'error');
+            return;
+        }
+
+        // 检查重复
+        const isDuplicate = orders.some(o =>
+            o.data.groomName === data.groomName &&
+            o.data.brideName === data.brideName &&
+            o.data.weddingDate === data.weddingDate &&
+            JSON.stringify(o.data.ceremony) === JSON.stringify(data.ceremony)
+        );
+
+        if (isDuplicate) {
+            if (!confirm('⚠️ 检测到已存在一条完全相同的数据：\n' + data.groomName + ' & ' + data.brideName + '\n\n是否仍要保存？')) {
+                return;
+            }
+        }
+
+        const settings = getSettings();
+        if (settings.autoSave) {
+            saveOrder(data);
+            showToast('✅ 已自动保存：' + data.groomName + ' & ' + data.brideName, 'success');
+        } else {
+            // 弹窗确认
+            if (confirm('解析成功！\n' + data.groomName + ' & ' + data.brideName + '\n婚期：' + (data.weddingDate || '未填写') + '\n\n是否保存到本地？')) {
+                saveOrder(data);
+                showToast('✅ 已保存', 'success');
+            } else {
+                // 仅展示详情不保存
+                showDetail(data);
+                return;
+            }
+        }
+
+        document.getElementById('parseInput').value = '';
+        refresh();
+    }
+
+    function saveOrder(data) {
+        const order = {
+            id: Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+            data: data,
+            savedAt: new Date().toISOString()
+        };
+        orders.push(order);
+        saveOrders();
+    }
+
+    // ========== 删除 & 清除 ==========
+    function deleteOrder(id) {
+        if (!confirm('确定删除这条确认单？')) return;
+        orders = orders.filter(o => o.id !== id);
+        saveOrders();
+        refresh();
+        showToast('已删除', 'success');
+    }
+
+    function clearAll() {
+        if (!confirm('⚠️ 确定清除所有确认单数据？此操作不可恢复！')) return;
+        if (!confirm('再次确认：真的要删除全部 ' + orders.length + ' 条数据吗？')) return;
+        orders = [];
+        saveOrders();
+        refresh();
+        showToast('已清除全部数据', 'success');
+    }
+
+    // ========== 视图切换 ==========
+    function switchView(view) {
+        currentView = view;
+        document.querySelectorAll('.view-toggle button').forEach(b => b.classList.remove('active'));
+        if (view === 'list') {
+            document.querySelectorAll('.view-toggle button')[0].classList.add('active');
+            document.getElementById('listView').classList.add('active');
+            document.getElementById('calendarView').classList.remove('active');
+        } else {
+            document.querySelectorAll('.view-toggle button')[1].classList.add('active');
+            document.getElementById('listView').classList.remove('active');
+            document.getElementById('calendarView').classList.add('active');
+            renderCalendar();
+        }
+    }
+
+    function toggleSettings() {
+        document.getElementById('settingsPanel').classList.toggle('show');
+    }
+
+    // ========== 列表视图 ==========
+    function renderListView() {
+        const container = document.getElementById('listView');
+        if (orders.length === 0) {
+            container.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>暂无确认单数据<br>粘贴新人分享的链接来解析</p></div>';
+            return;
+        }
+
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        const weekLater = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+        // 分类
+        const upcoming = [];
+        const expired = [];
+        orders.forEach(order => {
+            const d = order.data.weddingDate;
+            if (!d || d >= todayStr) upcoming.push(order);
+            else expired.push(order);
+        });
+
+        // 未到期按日期升序（最近的在前）
+        upcoming.sort((a, b) => {
+            const aD = a.data.weddingDate || '9999-12-31';
+            const bD = b.data.weddingDate || '9999-12-31';
+            return aD.localeCompare(bD);
+        });
+
+        // 已过期按日期降序（最近过期的在前）
+        expired.sort((a, b) => {
+            const aD = a.data.weddingDate || '0000-01-01';
+            const bD = b.data.weddingDate || '0000-01-01';
+            return bD.localeCompare(aD);
+        });
+
+        function getStatus(dateStr) {
+            if (!dateStr) return { label: '未设日期', badge: 'badge-nodate', cardClass: '', daysText: '' };
+            if (dateStr === todayStr) return { label: '🔴 今天', badge: 'badge-today', cardClass: 'today-event', daysText: '就是今天！' };
+            if (dateStr > todayStr && dateStr <= weekLater) {
+                const days = Math.ceil((new Date(dateStr) - today) / (1000*60*60*24));
+                return { label: '本周内', badge: 'badge-week', cardClass: 'this-week', daysText: days + '天后' };
+            }
+            if (dateStr > weekLater) {
+                const days = Math.ceil((new Date(dateStr) - today) / (1000*60*60*24));
+                return { label: '未到期', badge: 'badge-upcoming', cardClass: '', daysText: days + '天后' };
+            }
+            const days = Math.ceil((today - new Date(dateStr)) / (1000*60*60*24));
+            return { label: '已过期', badge: 'badge-expired', cardClass: 'expired', daysText: '已过' + days + '天' };
+        }
+
+        function renderCard(order) {
+            const d = order.data;
+            const status = getStatus(d.weddingDate);
+            const ceremonyCount = d.ceremony ? d.ceremony.length : 0;
+            return '<div class="order-card ' + status.cardClass + '" onclick="showDetail(null,\'' + order.id + '\')">'
+                + '<div class="card-header">'
+                + '<div class="card-title">' + esc(d.groomName) + ' & ' + esc(d.brideName) + '</div>'
+                + '<div class="card-badge ' + status.badge + '">' + status.label + '</div>'
+                + '</div>'
+                + '<div class="card-date">📅 ' + (d.weddingDate || '未设置日期')
+                + (status.daysText ? ' <span class="days-left">（' + status.daysText + '）</span>' : '')
+                + '</div>'
+                + '<div class="card-info">'
+                + '<span>🏨 ' + esc(d.venue || '未填写') + '</span>'
+                + '<span>🎭 ' + esc(d.hostStyle || '未填写') + '</span>'
+                + '<span>📋 ' + ceremonyCount + '个环节</span>'
+                + '<span>📞 ' + esc(d.phone || '未填写') + '</span>'
+                + '</div>'
+                + '<div class="card-actions" onclick="event.stopPropagation()">'
+                + '<button onclick="showDetail(null,\'' + order.id + '\')">查看详情</button>'
+                + '<button class="del" onclick="deleteOrder(\'' + order.id + '\')">删除</button>'
+                + '</div>'
+                + '</div>';
+        }
+
+        let html = '';
+        if (upcoming.length > 0) {
+            html += '<div class="list-section-title">📌 未到期 <span class="count">(' + upcoming.length + ')</span></div>';
+            html += upcoming.map(renderCard).join('');
+        }
+        if (expired.length > 0) {
+            html += '<div class="list-section-title">🕐 已过期 <span class="count">(' + expired.length + ')</span></div>';
+            html += expired.map(renderCard).join('');
+        }
+        container.innerHTML = html;
+    }
+
+    // ========== 日历视图 ==========
+    let calendarDateMap = {};
+
+    function renderCalendar() {
+        const grid = document.getElementById('calendarGrid');
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+
+        const year = calendarYear;
+        const month = calendarMonth;
+        document.getElementById('monthLabel').textContent = year + '年' + (month + 1) + '月';
+
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const startWeekday = firstDay.getDay();
+        const daysInMonth = lastDay.getDate();
+        const prevMonthLast = new Date(year, month, 0).getDate();
+
+        // 按日期分组
+        calendarDateMap = {};
+        orders.forEach(o => {
+            if (o.data.weddingDate) {
+                if (!calendarDateMap[o.data.weddingDate]) calendarDateMap[o.data.weddingDate] = [];
+                calendarDateMap[o.data.weddingDate].push(o);
+            }
+        });
+
+        let html = '';
+        const weekdays = ['日','一','二','三','四','五','六'];
+        weekdays.forEach(w => { html += '<div class="day-header">' + w + '</div>'; });
+
+        // 上月
+        for (let i = startWeekday - 1; i >= 0; i--) {
+            html += '<div class="day-cell other-month"><div class="day-num">' + (prevMonthLast - i) + '</div></div>';
+        }
+
+        // 本月
+        let monthUpcoming = 0, monthExpired = 0;
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateStr = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+            const isToday = dateStr === todayStr;
+            const events = calendarDateMap[dateStr] || [];
+            const count = events.length;
+
+            let countHtml = '';
+            if (count > 0) {
+                const allExpired = events.every(o => dateStr < todayStr);
+                const countClass = allExpired ? 'expired-count' : (dateStr === todayStr ? '' : '');
+                countHtml = '<div class="day-count ' + countClass + '">' + count + '</div>';
+                if (dateStr < todayStr) monthExpired += count;
+                else monthUpcoming += count;
+            }
+
+            html += '<div class="day-cell ' + (isToday ? 'today' : '') + '" onclick="showDayPopover(event,\'' + dateStr + '\')"><div class="day-num">' + d + '</div>' + countHtml + '</div>';
+        }
+
+        // 下月补齐
+        const totalCells = startWeekday + daysInMonth;
+        const remaining = (7 - totalCells % 7) % 7;
+        for (let i = 1; i <= remaining; i++) {
+            html += '<div class="day-cell other-month"><div class="day-num">' + i + '</div></div>';
+        }
+
+        grid.innerHTML = html;
+
+        document.getElementById('monthStat').innerHTML =
+            '本月统计：<strong>' + (monthUpcoming + monthExpired) + '</strong> 场婚礼 | '
+            + '未到期 <strong style="color:#28a745">' + monthUpcoming + '</strong> 场 | '
+            + '已过期 <strong style="color:#999">' + monthExpired + '</strong> 场';
+    }
+
+    function showDayPopover(e, dateStr) {
+        const events = calendarDateMap[dateStr] || [];
+        if (events.length === 0) { hideDayPopover(); return; }
+
+        const todayStr = new Date().toISOString().split('T')[0];
+        const pop = document.getElementById('dayPopover');
+
+        let html = '<div class="pop-title">' + dateStr + '（' + events.length + '场）</div>';
+        events.forEach(o => {
+            const expired = dateStr < todayStr;
+            const isToday = dateStr === todayStr;
+            const dotClass = expired ? 'expired' : (isToday ? 'is-today' : '');
+            html += '<div class="pop-item" onclick="showDetail(null,\'' + o.id + '\');hideDayPopover();">'
+                + '<span class="pop-dot ' + dotClass + '"></span>'
+                + esc(o.data.groomName) + ' & ' + esc(o.data.brideName)
+                + '</div>';
+        });
+        pop.innerHTML = html;
+
+        // 定位
+        const rect = e.currentTarget.getBoundingClientRect();
+        let top = rect.bottom + 6;
+        let left = rect.left;
+        if (left + 240 > window.innerWidth) left = window.innerWidth - 250;
+        if (top + 200 > window.innerHeight) top = rect.top - 200;
+        pop.style.top = top + 'px';
+        pop.style.left = left + 'px';
+        pop.classList.add('show');
+
+        // 点击外部关闭
+        setTimeout(() => {
+            document.addEventListener('click', closeDayPopoverOutside, { once: true });
+        }, 10);
+    }
+
+    function hideDayPopover() {
+        document.getElementById('dayPopover').classList.remove('show');
+    }
+
+    function closeDayPopoverOutside(e) {
+        const pop = document.getElementById('dayPopover');
+        if (!pop.contains(e.target)) { hideDayPopover(); }
+        else { document.addEventListener('click', closeDayPopoverOutside, { once: true }); }
+    }
+
+    function prevMonth() {
+        calendarMonth--;
+        if (calendarMonth < 0) { calendarMonth = 11; calendarYear--; }
+        renderCalendar();
+    }
+
+    function nextMonth() {
+        calendarMonth++;
+        if (calendarMonth > 11) { calendarMonth = 0; calendarYear++; }
+        renderCalendar();
+    }
+
+    // ========== 详情弹窗 ==========
+    function showDetail(data, id) {
+        if (!data && id) {
+            const order = orders.find(o => o.id === id);
+            if (!order) return;
+            data = order.data;
+        }
+        if (!data) return;
+
+        let ceremonyHtml = '';
+        if (data.ceremony && data.ceremony.length > 0) {
+            ceremonyHtml = '<table class="ceremony-table"><thead><tr><th>序号</th><th>流程</th><th>内容</th><th>音乐</th></tr></thead><tbody>';
+            data.ceremony.forEach((c, i) => {
+                ceremonyHtml += '<tr><td>' + (i + 1) + '</td><td>' + esc(c.name) + '</td><td>' + esc(c.content || '-') + '</td><td>' + esc(c.music || '-') + '</td></tr>';
+            });
+            ceremonyHtml += '</tbody></table>';
+        }
+
+        document.getElementById('modalContent').innerHTML =
+            '<h2>💒 ' + esc(data.groomName) + ' & ' + esc(data.brideName) + ' 婚礼确认单</h2>'
+            + '<div class="detail-grid">'
+            + '<div class="detail-item"><div class="label">婚礼日期</div><div class="value">' + (data.weddingDate || '未填写') + '</div></div>'
+            + '<div class="detail-item"><div class="label">酒店/场地</div><div class="value">' + esc(data.venue || '未填写') + '</div></div>'
+            + '<div class="detail-item"><div class="label">主持风格</div><div class="value">' + esc(data.hostStyle || '未填写') + '</div></div>'
+            + '<div class="detail-item"><div class="label">联系电话</div><div class="value">' + esc(data.phone || '未填写') + '</div></div>'
+            + '<div class="detail-item" style="grid-column:1/-1"><div class="label">备注</div><div class="value">' + esc(data.remarks || '无') + '</div></div>'
+            + '</div>'
+            + '<h3 style="font-size:14px;color:#c41a1a;margin:12px 0 8px">仪式流程（' + (data.ceremony ? data.ceremony.length : 0) + '个环节）</h3>'
+            + ceremonyHtml
+            + '<button class="modal-close" onclick="closeModal()">关闭</button>';
+
+        document.getElementById('modalOverlay').classList.add('show');
+    }
+
+    function closeModal(e) {
+        if (e && e.target !== document.getElementById('modalOverlay')) return;
+        document.getElementById('modalOverlay').classList.remove('show');
+    }
+
+    // ========== 统计 ==========
+    function updateStats() {
+        const today = new Date().toISOString().split('T')[0];
+        let upcoming = 0, expired = 0;
+        orders.forEach(o => {
+            if (o.data.weddingDate && o.data.weddingDate < today) expired++;
+            else upcoming++;
+        });
+        document.getElementById('statTotal').textContent = orders.length;
+        document.getElementById('statUpcoming').textContent = upcoming;
+        document.getElementById('statExpired').textContent = expired;
+    }
+
+    // ========== 工具 ==========
+    function esc(str) {
+        if (!str) return '';
+        return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function showToast(msg, type) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = 'toast ' + (type || '') + ' show';
+        setTimeout(() => { t.classList.remove('show'); }, 2500);
+    }
+
+    function refresh() {
+        loadOrders();
+        updateStats();
+        renderListView();
+        if (currentView === 'calendar') renderCalendar();
+    }
+
+    // ========== 初始化 ==========
+    function init() {
+        const now = new Date();
+        calendarYear = now.getFullYear();
+        calendarMonth = now.getMonth();
+        loadSettings();
+        refresh();
+
+        // 检测 URL 中是否携带数据，自动解析
+        const hash = location.hash;
+        if (hash && hash.startsWith('#data=')) {
+            autoParseFromUrl(hash);
+        }
+    }
+
+    function autoParseFromUrl(hash) {
+        let data = null;
+        try {
+            const encoded = hash.substring(6);
+            const jsonStr = decodeURIComponent(atob(encoded));
+            data = JSON.parse(jsonStr);
+        } catch (e) {
+            showToast('链接数据解析失败', 'error');
+            return;
+        }
+
+        if (!data.groomName || !data.brideName) {
+            showToast('数据不完整，缺少新人姓名', 'error');
+            return;
+        }
+
+        // 检查重复
+        const isDuplicate = orders.some(o =>
+            o.data.groomName === data.groomName &&
+            o.data.brideName === data.brideName &&
+            o.data.weddingDate === data.weddingDate &&
+            JSON.stringify(o.data.ceremony) === JSON.stringify(data.ceremony)
+        );
+
+        if (isDuplicate) {
+            showToast('⚠️ 该数据已存在，已为您打开详情', 'warn');
+            showDetail(data);
+            // 清除 hash
+            history.replaceState(null, '', location.pathname);
+            return;
+        }
+
+        const settings = getSettings();
+        if (settings.autoSave) {
+            saveOrder(data);
+            refresh();
+            showToast('✅ 已自动保存：' + data.groomName + ' & ' + data.brideName, 'success');
+            showDetail(data);
+        } else {
+            // 先展示详情，再询问是否保存
+            showDetail(data);
+            setTimeout(() => {
+                if (confirm('解析成功！\n' + data.groomName + ' & ' + data.brideName + '\n婚期：' + (data.weddingDate || '未填写') + '\n\n是否保存到本地？')) {
+                    saveOrder(data);
+                    refresh();
+                    showToast('✅ 已保存', 'success');
+                }
+            }, 300);
+        }
+
+        // 清除 hash，避免刷新重复解析
+        history.replaceState(null, '', location.pathname);
+    }
+
+    init();
+    </script>
+</body>
+</html>
